@@ -28,9 +28,9 @@
       - Para obter a key e fazer requests, você terá que fazer login e escolher
         o plano free. Seus dados de cartão de crédito não serão solicitados.
 */
-const currencyOneEl = document.querySelectorAll('[data-js="currency-one"]')
-const currencyTwoEl = document.querySelectorAll('[data-js="currency-two"]')
-const currenciesEl = document.querySelectorAll('[data-js="currencies-container"]');
+const currencyOneEl = document.querySelector('[data-js="currency-one"]')
+const currencyTwoEl = document.querySelector('[data-js="currency-two"]')
+const currenciesEl = document.getElementById('teste');
 
 const url ="https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/USD";
 
@@ -47,30 +47,43 @@ const fetchExchangeRate = async () => {
   try{
     const response = await fetch(url)
     const exchangeRateData = await response.json()
-
+    
     if(!response.ok){
+      
       throw new Error ("Sua conexão falhou. Não foi possível obter as informações.")
     }
 
     if(exchangeRateData.result === 'error'){
       throw new Error(getMessageError(exchangeRateData['error-type']))
     }
+    return exchangeRateData
   }catch (err){
-    alert(err.message)
-    // const div = document.createElement('div')
-    // const button = document.createElement('button')
+    //alert(err.message)
+    const div = document.createElement('div')
+    const button = document.createElement('button')
 
-    // div.textContent = err.message
+    div.textContent = err.message
 
-    // div.setAttribute("role","alert")
-    // div.classList.add('alert','alert-warning','alert-dismissible','fade','show')
+    div.classList.add('alert','alert-warning','alert-dismissible','fade','show')
+    div.setAttribute("role","alert")
 
-    // button.setAttribute("type","button")
-    // button.setAttribute("Atrribute","Close")
-    // button.classList.add('btn-close')
+    button.classList.add('btn-close')
+    button.setAttribute("type","button")
+    button.setAttribute("aria-label","Close")
+    
+    button.addEventListener("click", ()=> div.remove())
 
-    // div.appendChild(button)
-    //currenciesEl.insertAdjacentElement("afterend", div);
+    div.appendChild(button)
+    currenciesEl.insertAdjacentElement("afterend", div);
+    
   }
 }
-fetchExchangeRate()
+const init = async () => {
+  console.log(await fetchExchangeRate());
+
+  const option = `<option> oi </option>`
+
+  currencyOneEl.innerHTML = option
+  currencyTwoEl.innerHTML = option
+}
+init()
