@@ -28,3 +28,49 @@
       - Para obter a key e fazer requests, você terá que fazer login e escolher
         o plano free. Seus dados de cartão de crédito não serão solicitados.
 */
+const currencyOneEl = document.querySelectorAll('[data-js="currency-one"]')
+const currencyTwoEl = document.querySelectorAll('[data-js="currency-two"]')
+const currenciesEl = document.querySelectorAll('[data-js="currencies-container"]');
+
+const url ="https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/USD";
+
+const getMessageError = (errorType) =>
+  ({
+    "unsupported-code":"Código de moeda fornecido não é compatível. (consulte as moedas suportadas)",
+    "malformed-request":"Alguma parte da sua solicitação não segue a estrutura mostrada acima.",
+    "invalid-key":"A chave da API não é valida.",
+    "inactive-account":"Seu endereço de e-mail não foi confirmado.",
+    "quota-reached":"Sua conta atingiu  limite de requests permitido em seu plano atual.",
+  })[errorType] || "Não foi possível obter as informações."
+
+const fetchExchangeRate = async () => {
+  try{
+    const response = await fetch(url)
+    const exchangeRateData = await response.json()
+
+    if(!response.ok){
+      throw new Error ("Sua conexão falhou. Não foi possível obter as informações.")
+    }
+
+    if(exchangeRateData.result === 'error'){
+      throw new Error(getMessageError(exchangeRateData['error-type']))
+    }
+  }catch (err){
+    alert(err.message)
+    // const div = document.createElement('div')
+    // const button = document.createElement('button')
+
+    // div.textContent = err.message
+
+    // div.setAttribute("role","alert")
+    // div.classList.add('alert','alert-warning','alert-dismissible','fade','show')
+
+    // button.setAttribute("type","button")
+    // button.setAttribute("Atrribute","Close")
+    // button.classList.add('btn-close')
+
+    // div.appendChild(button)
+    //currenciesEl.insertAdjacentElement("afterend", div);
+  }
+}
+fetchExchangeRate()
