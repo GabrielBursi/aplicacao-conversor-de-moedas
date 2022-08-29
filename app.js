@@ -30,9 +30,15 @@
 */
 const currencyOneEl = document.querySelector('[data-js="currency-one"]')
 const currencyTwoEl = document.querySelector('[data-js="currency-two"]')
-const currenciesEl = document.getElementById('teste');
+const currenciesEl = document.getElementById('teste')
+const convertedValueEl = document.querySelector('[data-js="converted-value"]')
+const convertedPrecision = document.querySelector('[data-js="conversion-precision"]')
+const timesCurrencyOneEl = document.querySelector('[data-js="currency-one-times"]');
 
-const url ="https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/USD";
+let internalExchangeRate = {}
+
+const url = `https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/USD`;
+// `https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/${currencyOneEl.value}`;
 
 const getMessageError = (errorType) =>
   ({
@@ -43,7 +49,7 @@ const getMessageError = (errorType) =>
     "quota-reached":"Sua conta atingiu  limite de requests permitido em seu plano atual.",
   })[errorType] || "Não foi possível obter as informações."
 
-const fetchExchangeRate = async () => {
+const fetchExchangeRate = async () => { 
   try{
     const response = await fetch(url)
     const exchangeRateData = await response.json()
@@ -71,7 +77,7 @@ const fetchExchangeRate = async () => {
     button.setAttribute("type","button")
     button.setAttribute("aria-label","Close")
     
-    button.addEventListener("click", ()=> div.remove())
+    button.addEventListener("click", () => div.remove())
 
     div.appendChild(button)
     currenciesEl.insertAdjacentElement("afterend", div);
@@ -79,11 +85,23 @@ const fetchExchangeRate = async () => {
   }
 }
 const init = async () => {
-  console.log(await fetchExchangeRate());
+  const exchangeRateData = await fetchExchangeRate();
 
-  const option = `<option> oi </option>`
+  internalExchangeRate = { ...exchangeRateData };
 
-  currencyOneEl.innerHTML = option
-  currencyTwoEl.innerHTML = option
+  const getOptions = selectCurrency  => Object.keys(exchangeRateData.conversion_rates).map((currency) => 
+  `<option ${currency === selectCurrency ? 'selected' : ''}>${currency}</option>`
+  ).join('');
+ 
+  currencyOneEl.innerHTML = getOptions("USD");
+  currencyTwoEl.innerHTML = getOptions("BRL");
+
+  convertedValueEl.textContent = exchangeRateData.conversion_rates.BRL.toFixed(2)
+  convertedPrecision.textContent = `1 USD = ${exchangeRateData.conversion_rates.BRL} BRL`
+
+  timesCurrencyOneEl.addEventListener('input',e =>{
+    convertedValueEl.textContent = (e.target.value * internalExchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2);
+    //convertedPrecision.textContent = `${e.target.value} USD = ${(e.target.value * internalExchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(4)} BRL`;
+  })
 }
 init()
