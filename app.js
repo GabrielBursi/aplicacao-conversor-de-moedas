@@ -103,5 +103,13 @@ const init = async () => {
     convertedValueEl.textContent = (e.target.value * internalExchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2);
     //convertedPrecision.textContent = `${e.target.value} USD = ${(e.target.value * internalExchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(4)} BRL`;
   })
+
+  currencyTwoEl.addEventListener('input',e =>{
+    const currencyTwoValue = internalExchangeRate.conversion_rates[e.target.value]
+    convertedValueEl.textContent = (timesCurrencyOneEl.value * currencyTwoValue).toFixed(2)
+    convertedPrecision.textContent = `1 USD = ${
+        1 * internalExchangeRate.conversion_rates[currencyTwoEl.value]} ${currencyTwoEl.value
+      }`;
+  })
 }
 init()
