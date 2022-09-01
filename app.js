@@ -35,8 +35,23 @@ const convertedValueEl = document.querySelector('[data-js="converted-value"]')
 const convertedPrecision = document.querySelector('[data-js="conversion-precision"]')
 const timesCurrencyOneEl = document.querySelector('[data-js="currency-one-times"]');
 
-let internalExchangeRate = {}
 
+const state = (() => {
+  exchangeRate = {}
+  return{
+    getExchangeRate: () => exchangeRate,
+    setExchangeRate: newExchangeRate => {
+      if(!newExchangeRate.conversion_rates){
+        console.log('teste')
+        return
+      }
+      exchangeRate = newExchangeRate
+      return newExchangeRate
+    }
+  }
+})()
+
+console.log(state.getExchangeRate(),state.setExchangeRate({conversion_rates:{'USD':1}}),state.getExchangeRate())
 
 const getUrl = currency =>`https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/${currency}`;
 // `https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/${currencyOneEl.value}`;
