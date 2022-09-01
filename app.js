@@ -103,16 +103,16 @@ const fetchExchangeRate = async (url) => {
     if(exchangeRateData.result === 'error'){
       throw new Error(getMessageError(exchangeRateData['error-type']))
     }
-    return exchangeRateData
+    return state.setExchangeRate(exchangeRateData)
   }catch (err){
     //alert(err.message)
     showAlert(err)
   }
 }
 
-const showInitialInfo = exchangeRate => {
+const showInitialInfo = ({conversion_rates}) => {
   const getOptions = (selectCurrency) =>
-      Object.keys(exchangeRate.conversion_rates).map((currency) =>
+      Object.keys(conversion_rates).map((currency) =>
       `<option ${currency === selectCurrency ? "selected" : ""}>${currency}</option>`).join("");
 
     currencyOneEl.innerHTML = getOptions("USD");
@@ -123,21 +123,32 @@ const showInitialInfo = exchangeRate => {
 }
 
 const init = async () => {
-  
-  const exchangeRate = state.setExchangeRate(await fetchExchangeRate(getUrl('USD')))
+  const url = getUrl("USD");
+  const exchangeRate = await fetchExchangeRate(url);
+
   if (exchangeRate && exchangeRate.conversion_rates) {
     showInitialInfo(exchangeRate);
   }
 }
 
-const showUpdatesRates = exchangeRate => {
-    convertedValueEl.textContent = (timesCurrencyOneEl.value * exchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2)
-    convertedPrecision.textContent = `1 ${currencyOneEl.value} = ${1 * exchangeRate.conversion_rates[currencyTwoEl.value]} ${currencyTwoEl.value}`;
+const getMultipliedExchangeRate = conversion_rates => {
+  const currencyTwo = conversion_rates[currencyTwoEl.value];
+  return (timesCurrencyOneEl.value * currencyTwo).toFixed(2);
+}
+
+const getNotRoundedExchangeRate = conversion_rates => {
+  const currencyTwo = conversion_rates[currencyTwoEl.value]
+  return `1 ${currencyOneEl.value} = ${1 * currencyTwo} ${currencyTwoEl.value}`;
+}
+ 
+const showUpdatesRates = ({conversion_rates}) => {
+    convertedValueEl.textContent = getMultipliedExchangeRate(conversion_rates);
+    convertedPrecision.textContent = getNotRoundedExchangeRate(conversion_rates)
   }
 
-  timesCurrencyOneEl.addEventListener('input',e =>{
-    const exchangeRate = state.getExchangeRate()
-    convertedValueEl.textContent = (e.target.value * exchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2);
+  timesCurrencyOneEl.addEventListener('input',() =>{
+    const { conversion_rates } = state.getExchangeRate();
+    convertedValueEl.textContent = getMultipliedExchangeRate(conversion_rates);
   })
 
 currencyTwoEl.addEventListener('input',() =>{
@@ -146,8 +157,8 @@ currencyTwoEl.addEventListener('input',() =>{
 })
 
 currencyOneEl.addEventListener('input', async e => {
-  //const internalExchangeRate = {...(await fetchExchangeRate(getUrl(e.target.value)))}
-  const exchangeRate = state.setExchangeRate(await fetchExchangeRate(getUrl(e.target.value)))
+  const url = getUrl(e.target.value);
+  const exchangeRate = await fetchExchangeRate(url);
   showUpdatesRates(exchangeRate);
 })
 
