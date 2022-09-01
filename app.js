@@ -35,37 +35,7 @@ const convertedValueEl = document.querySelector('[data-js="converted-value"]')
 const convertedPrecision = document.querySelector('[data-js="conversion-precision"]')
 const timesCurrencyOneEl = document.querySelector('[data-js="currency-one-times"]');
 
-
-const state = (() => {
-  exchangeRate = {}
-  return{
-    getExchangeRate: () => exchangeRate,
-    setExchangeRate: newExchangeRate => {
-      if(!newExchangeRate.conversion_rates){
-        console.log('teste')
-        return
-      }
-      exchangeRate = newExchangeRate
-      return newExchangeRate
-    }
-  }
-})()
-
-console.log(state.getExchangeRate(),state.setExchangeRate({conversion_rates:{'USD':1}}),state.getExchangeRate())
-
-const getUrl = currency =>`https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/${currency}`;
-// `https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/${currencyOneEl.value}`;
-
-const getMessageError = (errorType) =>
-  ({
-    "unsupported-code":"Código de moeda fornecido não é compatível. (consulte as moedas suportadas)",
-    "malformed-request":"Alguma parte da sua solicitação não segue a estrutura mostrada acima.",
-    "invalid-key":"A chave da API não é valida.",
-    "inactive-account":"Seu endereço de e-mail não foi confirmado.",
-    "quota-reached":"Sua conta atingiu  limite de requests permitido em seu plano atual.",
-  })[errorType] || "Não foi possível obter as informações."
-
-const showError = err => {
+const showAlert = (err) => {
   const div = document.createElement("div");
   const button = document.createElement("button");
 
@@ -88,8 +58,37 @@ const showError = err => {
 
   div.appendChild(button);
   currenciesEl.insertAdjacentElement("afterend", div);
-    
-}
+};
+
+const state = (() => {
+  exchangeRate = {}
+  return{
+    getExchangeRate: () => exchangeRate,
+    setExchangeRate: newExchangeRate => {
+      if(!newExchangeRate.conversion_rates){
+        showAlert({message:"O objeto precisa ter uma propriedade conversion_rates"});
+        return
+      }
+      exchangeRate = newExchangeRate
+      return newExchangeRate
+    }
+
+  }
+})()
+
+
+const getUrl = currency =>`https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/${currency}`;
+// `https://v6.exchangerate-api.com/v6/e87e2155e9654a749aa77ab0/latest/${currencyOneEl.value}`;
+
+const getMessageError = (errorType) =>
+  ({
+    "unsupported-code":"Código de moeda fornecido não é compatível. (consulte as moedas suportadas)",
+    "malformed-request":"Alguma parte da sua solicitação não segue a estrutura mostrada acima.",
+    "invalid-key":"A chave da API não é valida.",
+    "inactive-account":"Seu endereço de e-mail não foi confirmado.",
+    "quota-reached":"Sua conta atingiu  limite de requests permitido em seu plano atual.",
+  })[errorType] || "Não foi possível obter as informações."
+
 
 const fetchExchangeRate = async (url) => { 
   try{
@@ -107,45 +106,49 @@ const fetchExchangeRate = async (url) => {
     return exchangeRateData
   }catch (err){
     //alert(err.message)
-    showError(err)
+    showAlert(err)
   }
 }
 
-const showInitialInfo = () => {
+const showInitialInfo = exchangeRate => {
   const getOptions = (selectCurrency) =>
-      Object.keys(internalExchangeRate.conversion_rates).map((currency) =>
+      Object.keys(exchangeRate.conversion_rates).map((currency) =>
       `<option ${currency === selectCurrency ? "selected" : ""}>${currency}</option>`).join("");
 
     currencyOneEl.innerHTML = getOptions("USD");
     currencyTwoEl.innerHTML = getOptions("BRL");
 
-    convertedValueEl.textContent = internalExchangeRate.conversion_rates.BRL.toFixed(2);
-    convertedPrecision.textContent = `1 USD = ${internalExchangeRate.conversion_rates.BRL} BRL`;
+    convertedValueEl.textContent = exchangeRate.conversion_rates.BRL.toFixed(2);
+    convertedPrecision.textContent = `1 USD = ${exchangeRate.conversion_rates.BRL} BRL`;
 }
 
 const init = async () => {
   
-  internalExchangeRate = { ...(await fetchExchangeRate(getUrl('USD'))) };
-
-  if (internalExchangeRate.conversion_rates) {
-    showInitialInfo()
+  const exchangeRate = state.setExchangeRate(await fetchExchangeRate(getUrl('USD')))
+  if (exchangeRate && exchangeRate.conversion_rates) {
+    showInitialInfo(exchangeRate);
   }
 }
 
-const showUpdatesRates = () => {
-    convertedValueEl.textContent = (timesCurrencyOneEl.value * internalExchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2)
-    convertedPrecision.textContent = `1 ${currencyOneEl.value} = ${1 * internalExchangeRate.conversion_rates[currencyTwoEl.value]} ${currencyTwoEl.value}`;
+const showUpdatesRates = exchangeRate => {
+    convertedValueEl.textContent = (timesCurrencyOneEl.value * exchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2)
+    convertedPrecision.textContent = `1 ${currencyOneEl.value} = ${1 * exchangeRate.conversion_rates[currencyTwoEl.value]} ${currencyTwoEl.value}`;
   }
 
   timesCurrencyOneEl.addEventListener('input',e =>{
-    convertedValueEl.textContent = (e.target.value * internalExchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2);
+    const exchangeRate = state.getExchangeRate()
+    convertedValueEl.textContent = (e.target.value * exchangeRate.conversion_rates[currencyTwoEl.value]).toFixed(2);
   })
 
-currencyTwoEl.addEventListener('input',showUpdatesRates)
+currencyTwoEl.addEventListener('input',() =>{
+  const exchangeRate = state.getExchangeRate()
+  showUpdatesRates(exchangeRate);
+})
 
 currencyOneEl.addEventListener('input', async e => {
-  const internalExchangeRate = {...(await fetchExchangeRate(getUrl(e.target.value)))}
-  showUpdatesRates();
+  //const internalExchangeRate = {...(await fetchExchangeRate(getUrl(e.target.value)))}
+  const exchangeRate = state.setExchangeRate(await fetchExchangeRate(getUrl(e.target.value)))
+  showUpdatesRates(exchangeRate);
 })
 
 init()
